@@ -7,9 +7,7 @@ node_modules
 /src-tauri/target/
 
 # Tauri's generated bundles and debug files
-/src-tauri/src/assets/
 /src-tauri/gen/
-/src-tauri/icons/
 /src-tauri/bin/
 
 # Frontend build output (common with Tauri/Vite/React/etc.)
