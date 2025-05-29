@@ -1,21 +1,26 @@
-// Ensure the DOM is fully loaded before trying to access elements
 document.addEventListener("DOMContentLoaded", () => {
   const canvas = document.getElementById("gameCanvas");
   const context = canvas.getContext("2d");
   const scoreElement = document.getElementById("scoreValue");
+  const bestScoreElement = document.getElementById("highestScore");
   const themeToggleButton = document.getElementById("themeToggleBtn");
 
-  // Ensure elements are found before proceeding
-  if (!canvas || !context || !scoreElement || !themeToggleButton) {
+  if (
+    !canvas ||
+    !context ||
+    !scoreElement ||
+    !bestScoreElement ||
+    !themeToggleButton
+  ) {
     console.error("One or more essential HTML elements are missing.");
-    return; // Stop script execution if elements are not found
+    return;
   }
+
+  let bestScore = parseInt(localStorage.getItem("snakeBestScore")) || 0;
+  bestScoreElement.textContent = bestScore;
 
   const grid = 16;
   const canvasSize = 512;
-  // Canvas width and height are set in HTML, but good to have here for reference or dynamic changes
-  // canvas.width = canvasSize;
-  // canvas.height = canvasSize;
 
   const themes = {
     dark: {
@@ -80,17 +85,15 @@ document.addEventListener("DOMContentLoaded", () => {
   function applyTheme() {
     document.body.style.backgroundColor = currentTheme.bodyBg;
     document.body.style.color = currentTheme.bodyText;
-    document.body.className = currentTheme.name + "-theme"; // For CSS to target
+    document.body.className = currentTheme.name + "-theme";
 
     const gameWrapper = document.querySelector(".game-wrapper");
     if (gameWrapper) {
-      // Check if element exists
       gameWrapper.style.backgroundColor = currentTheme.wrapperBg;
     }
 
     const scoreDisplay = scoreElement.parentElement;
     if (scoreDisplay) {
-      // Check if element exists
       scoreDisplay.style.color = currentTheme.scoreText;
     }
 
@@ -102,9 +105,7 @@ document.addEventListener("DOMContentLoaded", () => {
     context.fillStyle = currentTheme.canvasBg;
     context.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Redraw game elements if game is in a static state
     if (isPaused || !animationFrameId || gameOver) {
-      // Added gameOver here
       drawApple();
       drawSnake();
     }
@@ -147,10 +148,9 @@ document.addEventListener("DOMContentLoaded", () => {
     gameOver = false;
     isPaused = false;
 
-    // Initialize the first cell for drawing
     snake.cells.unshift({ x: snake.x, y: snake.y });
 
-    applyTheme(); // This will clear canvas and draw initial snake/apple
+    applyTheme();
 
     animationFrameId = requestAnimationFrame(gameLoop);
   }
@@ -172,7 +172,6 @@ document.addEventListener("DOMContentLoaded", () => {
     snake.x += snake.dx;
     snake.y += snake.dy;
 
-    // Wall wrapping logic
     if (snake.x < 0) {
       snake.x = canvas.width - grid;
     } else if (snake.x >= canvas.width) {
@@ -192,23 +191,26 @@ document.addEventListener("DOMContentLoaded", () => {
     drawApple();
     drawSnake();
 
-    // Apple eaten
     if (snake.x === apple.x && snake.y === apple.y) {
       snake.maxCells++;
-      scoreElement.textContent = snake.maxCells - 4;
+      const currentScore = snake.maxCells - 4;
+      scoreElement.textContent = currentScore;
+
+      if (currentScore > bestScore) {
+        bestScore = currentScore;
+        bestScoreElement.textContent = bestScore;
+        localStorage.setItem("snakeBestScore", bestScore);
+      }
+
       placeApple();
     }
 
-    // Self collision
     for (let i = 1; i < snake.cells.length; i++) {
       if (snake.x === snake.cells[i].x && snake.y === snake.cells[i].y) {
         gameOver = true;
         cancelAnimationFrame(animationFrameId);
         animationFrameId = null;
-        // Don't reset immediately, allow the last frame to be shown briefly
-        // or handle game over state visually before reset if desired.
-        // For now, we will reset after a short delay or on next input.
-        // For simplicity of this refactor, let's stick to immediate reset:
+
         resetGame();
         return;
       }
@@ -218,7 +220,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.addEventListener("keydown", function (e) {
     if (e.code === "Space") {
       e.preventDefault();
-      if (gameOver && !isPaused) return; // Prevent pause if game over and not already paused
+      if (gameOver && !isPaused) return;
 
       isPaused = !isPaused;
       if (isPaused) {
@@ -226,39 +228,32 @@ document.addEventListener("DOMContentLoaded", () => {
           cancelAnimationFrame(animationFrameId);
           animationFrameId = null;
         }
-        // Redraw current state when paused
+
         context.fillStyle = currentTheme.canvasBg;
         context.fillRect(0, 0, canvas.width, canvas.height);
         drawApple();
         drawSnake();
       } else {
-        // Resuming
         if (!animationFrameId && !gameOver) {
-          // Only resume if not already running and not game over
           animationFrameId = requestAnimationFrame(gameLoop);
         }
       }
       return;
     }
 
-    // If game is paused or over, only allow unpausing via Space
     if (isPaused || gameOver) return;
 
     const keyPressed = e.which;
     if (keyPressed === 37 && snake.dx === 0) {
-      // Left
       snake.dx = -grid;
       snake.dy = 0;
     } else if (keyPressed === 38 && snake.dy === 0) {
-      // Up
       snake.dy = -grid;
       snake.dx = 0;
     } else if (keyPressed === 39 && snake.dx === 0) {
-      // Right
       snake.dx = grid;
       snake.dy = 0;
     } else if (keyPressed === 40 && snake.dy === 0) {
-      // Down
       snake.dy = grid;
       snake.dx = 0;
     }
@@ -267,7 +262,7 @@ document.addEventListener("DOMContentLoaded", () => {
   themeToggleButton.addEventListener("click", () => {
     currentTheme = currentTheme.name === "dark" ? themes.light : themes.dark;
     applyTheme();
-    // If game is paused, ensure the static display updates with the new theme
+
     if (isPaused) {
       context.fillStyle = currentTheme.canvasBg;
       context.fillRect(0, 0, canvas.width, canvas.height);
@@ -276,6 +271,5 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Initial setup
-  resetGame(); // Start the game
+  resetGame();
 });
