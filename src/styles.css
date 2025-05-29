@@ -1,0 +1,60 @@
+body {
+    overflow: hidden;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    max-height: 600px;
+    max-width: 552px;
+    font-family: "Inter", sans-serif;
+    transition:
+        background-color 0.3s,
+        color 0.3s;
+}
+.game-wrapper {
+    padding: 20px;
+    transition:
+        background-color 0.3s,
+        box-shadow 0.3s;
+}
+canvas {
+    display: block;
+    /* The canvas background is drawn via JS */
+}
+.controls {
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center; /* This should vertically align flex items */
+    width: 100%;
+    max-width: 512px;
+}
+.score-display {
+    font-size: 1.25rem; /* 20px */
+    font-weight: 600;
+    line-height: 1.5; /* Adjust line-height for better vertical alignment if needed */
+}
+.theme-toggle-button {
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 1.25rem; /* 20px, same as score for easier alignment */
+    cursor: pointer;
+    transition:
+        background-color 0.3s,
+        color 0.3s,
+        opacity 0.3s;
+    border: none; /* Remove border for a flatter look if bg is canvasBg */
+    line-height: 1; /* Keeps emoji centered in button */
+    display: flex; /* To help center content if needed */
+    align-items: center;
+    justify-content: center;
+}
+
+/* Light theme specific styles for wrapper shadow */
+body.light-theme .game-wrapper {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+body.dark-theme .game-wrapper {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}

@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Snake Game</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
+        <link rel="stylesheet" href="styles.css" />
+    </head>
+    <body class="dark-theme">
+        <div class="game-wrapper">
+            <div class="controls">
+                <div class="score-display">
+                    Score: <span id="scoreValue">0</span>
+                </div>
+                <button id="themeToggleBtn" class="theme-toggle-button">
+                    🌙
+                </button>
+            </div>
+            <canvas width="512" height="512" id="gameCanvas"></canvas>
+        </div>
+
+        <script src="main.js"></script>
+    </body>
+</html>
