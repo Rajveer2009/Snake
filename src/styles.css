@@ -31,6 +31,11 @@ canvas {
     align-items: center;
     width: 100%;
     max-width: 512px;
+    max-height: 45.6px;
+}
+
+#logo {
+    height: 45.6px;
 }
 
 .score-display {
