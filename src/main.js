@@ -16,13 +16,12 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  canvas.style.touchAction = "none";
-
   let bestScore = parseInt(localStorage.getItem("snakeBestScore")) || 0;
   bestScoreElement.textContent = bestScore;
 
   const grid = 16;
   const canvasSize = 512;
+
   const themes = {
     dark: {
       name: "dark",
@@ -61,14 +60,11 @@ document.addEventListener("DOMContentLoaded", () => {
     cells: [],
     maxCells: 4,
   };
+
   let apple = {
     x: 0,
     y: 0,
   };
-
-  let touchStartX = 0;
-  let touchStartY = 0;
-  const swipeThreshold = 30;
 
   function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min)) + min;
@@ -77,6 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function placeApple() {
     apple.x = getRandomInt(0, canvasSize / grid) * grid;
     apple.y = getRandomInt(0, canvasSize / grid) * grid;
+
     for (let i = 0; i < snake.cells.length; i++) {
       if (apple.x === snake.cells[i].x && apple.y === snake.cells[i].y) {
         placeApple();
@@ -89,14 +86,17 @@ document.addEventListener("DOMContentLoaded", () => {
     document.body.style.backgroundColor = currentTheme.bodyBg;
     document.body.style.color = currentTheme.bodyText;
     document.body.className = currentTheme.name + "-theme";
+
     const gameWrapper = document.querySelector(".game-wrapper");
     if (gameWrapper) {
       gameWrapper.style.backgroundColor = currentTheme.wrapperBg;
     }
+
     const scoreDisplay = scoreElement.parentElement;
     if (scoreDisplay) {
       scoreDisplay.style.color = currentTheme.scoreText;
     }
+
     themeToggleButton.textContent =
       currentTheme.name === "dark" ? themes.light.emoji : themes.dark.emoji;
     themeToggleButton.style.backgroundColor = currentTheme.canvasBg;
@@ -135,21 +135,23 @@ document.addEventListener("DOMContentLoaded", () => {
       cancelAnimationFrame(animationFrameId);
       animationFrameId = null;
     }
+
     snake.x = canvasSize / 2 - grid;
     snake.y = canvasSize / 2 - grid;
     snake.cells = [];
     snake.maxCells = 4;
     snake.dx = grid;
     snake.dy = 0;
+
     placeApple();
     scoreElement.textContent = 0;
     gameOver = false;
     isPaused = false;
-    snake.cells.unshift({
-      x: snake.x,
-      y: snake.y,
-    });
+
+    snake.cells.unshift({ x: snake.x, y: snake.y });
+
     applyTheme();
+
     animationFrameId = requestAnimationFrame(gameLoop);
   }
 
@@ -158,6 +160,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
     animationFrameId = requestAnimationFrame(gameLoop);
+
     if (++gameLoopThrottleCount < 4) {
       return;
     }
@@ -180,11 +183,7 @@ document.addEventListener("DOMContentLoaded", () => {
       snake.y = 0;
     }
 
-    snake.cells.unshift({
-      x: snake.x,
-      y: snake.y,
-    });
-
+    snake.cells.unshift({ x: snake.x, y: snake.y });
     if (snake.cells.length > snake.maxCells) {
       snake.cells.pop();
     }
@@ -196,11 +195,13 @@ document.addEventListener("DOMContentLoaded", () => {
       snake.maxCells++;
       const currentScore = snake.maxCells - 4;
       scoreElement.textContent = currentScore;
+
       if (currentScore > bestScore) {
         bestScore = currentScore;
         bestScoreElement.textContent = bestScore;
         localStorage.setItem("snakeBestScore", bestScore);
       }
+
       placeApple();
     }
 
@@ -209,28 +210,9 @@ document.addEventListener("DOMContentLoaded", () => {
         gameOver = true;
         cancelAnimationFrame(animationFrameId);
         animationFrameId = null;
+
         resetGame();
         return;
-      }
-    }
-  }
-
-  function togglePause() {
-    if (gameOver && !isPaused) return;
-    isPaused = !isPaused;
-    if (isPaused) {
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-        animationFrameId = null;
-      }
-
-      context.fillStyle = currentTheme.canvasBg;
-      context.fillRect(0, 0, canvas.width, canvas.height);
-      drawApple();
-      drawSnake();
-    } else {
-      if (!animationFrameId && !gameOver) {
-        animationFrameId = requestAnimationFrame(gameLoop);
       }
     }
   }
@@ -238,14 +220,30 @@ document.addEventListener("DOMContentLoaded", () => {
   document.addEventListener("keydown", function (e) {
     if (e.code === "Space") {
       e.preventDefault();
-      togglePause();
+      if (gameOver && !isPaused) return;
+
+      isPaused = !isPaused;
+      if (isPaused) {
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId);
+          animationFrameId = null;
+        }
+
+        context.fillStyle = currentTheme.canvasBg;
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        drawApple();
+        drawSnake();
+      } else {
+        if (!animationFrameId && !gameOver) {
+          animationFrameId = requestAnimationFrame(gameLoop);
+        }
+      }
       return;
     }
 
     if (isPaused || gameOver) return;
 
     const keyPressed = e.which;
-
     if (keyPressed === 37 && snake.dx === 0) {
       snake.dx = -grid;
       snake.dy = 0;
@@ -261,60 +259,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  canvas.addEventListener("touchstart", (e) => {
-    e.preventDefault();
-    if (e.touches.length === 1) {
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-    }
-  });
-
-  canvas.addEventListener("touchmove", (e) => {
-    e.preventDefault();
-  });
-
-  canvas.addEventListener("touchend", (e) => {
-    e.preventDefault();
-
-    if (e.changedTouches.length === 1) {
-      const touchEndX = e.changedTouches[0].clientX;
-      const touchEndY = e.changedTouches[0].clientY;
-
-      const deltaX = touchEndX - touchStartX;
-      const deltaY = touchEndY - touchStartY;
-
-      if (
-        Math.abs(deltaX) > swipeThreshold ||
-        Math.abs(deltaY) > swipeThreshold
-      ) {
-        if (isPaused || gameOver) return;
-
-        if (Math.abs(deltaX) > Math.abs(deltaY)) {
-          if (deltaX > 0 && snake.dx === 0) {
-            snake.dx = grid;
-            snake.dy = 0;
-          } else if (deltaX < 0 && snake.dx === 0) {
-            snake.dx = -grid;
-            snake.dy = 0;
-          }
-        } else {
-          if (deltaY > 0 && snake.dy === 0) {
-            snake.dy = grid;
-            snake.dx = 0;
-          } else if (deltaY < 0 && snake.dy === 0) {
-            snake.dy = -grid;
-            snake.dx = 0;
-          }
-        }
-      } else {
-        togglePause();
-      }
-    }
-  });
-
   themeToggleButton.addEventListener("click", () => {
     currentTheme = currentTheme.name === "dark" ? themes.light : themes.dark;
     applyTheme();
+
     if (isPaused) {
       context.fillStyle = currentTheme.canvasBg;
       context.fillRect(0, 0, canvas.width, canvas.height);
