@@ -46,3 +46,4 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+.update_version.sh
