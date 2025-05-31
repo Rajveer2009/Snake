@@ -2,6 +2,8 @@
 
 This is a fun and minimalistic Snake Game built as a desktop application using **Tauri** and **HTML5 Canvas**. Designed for a smooth offline gaming experience with beautiful themes and responsive controls.
 
+![snake](snake.png)
+
 ## 🎮 About
 
 The Snake Game is a classic arcade-style game where you control a snake to eat food, grow longer, and avoid colliding with yourself. This desktop version includes theme toggling and keyboard controls for a seamless and modern gameplay experience.
