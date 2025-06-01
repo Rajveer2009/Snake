@@ -4,6 +4,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const scoreElement = document.getElementById("scoreValue");
   const bestScoreElement = document.getElementById("highestScore");
   const themeToggleButton = document.getElementById("themeToggleBtn");
+  const logoElement = document.getElementById("logo");
+
+  logoElement.src = "assets/snake.png";
 
   if (
     !canvas ||
@@ -46,6 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
       emoji: "☀️",
     },
   };
+
   let currentTheme = themes.dark;
   let isPaused = false;
   let gameOver = false;
@@ -65,6 +69,10 @@ document.addEventListener("DOMContentLoaded", () => {
     x: 0,
     y: 0,
   };
+
+  let connectedGamepads = {};
+  let lastGamepadButtonState = {};
+  const GAMEPAD_AXIS_THRESHOLD = 0.5;
 
   function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min)) + min;
@@ -135,30 +143,27 @@ document.addEventListener("DOMContentLoaded", () => {
       cancelAnimationFrame(animationFrameId);
       animationFrameId = null;
     }
-
     snake.x = canvasSize / 2 - grid;
     snake.y = canvasSize / 2 - grid;
     snake.cells = [];
     snake.maxCells = 4;
     snake.dx = grid;
     snake.dy = 0;
-
     placeApple();
     scoreElement.textContent = 0;
     gameOver = false;
     isPaused = false;
-
     snake.cells.unshift({ x: snake.x, y: snake.y });
-
     applyTheme();
-
     animationFrameId = requestAnimationFrame(gameLoop);
   }
 
   function gameLoop() {
     if (isPaused || gameOver) {
+      animationFrameId = null;
       return;
     }
+
     animationFrameId = requestAnimationFrame(gameLoop);
 
     if (++gameLoopThrottleCount < 4) {
@@ -184,6 +189,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     snake.cells.unshift({ x: snake.x, y: snake.y });
+
     if (snake.cells.length > snake.maxCells) {
       snake.cells.pop();
     }
@@ -195,13 +201,11 @@ document.addEventListener("DOMContentLoaded", () => {
       snake.maxCells++;
       const currentScore = snake.maxCells - 4;
       scoreElement.textContent = currentScore;
-
       if (currentScore > bestScore) {
         bestScore = currentScore;
         bestScoreElement.textContent = bestScore;
         localStorage.setItem("snakeBestScore", bestScore);
       }
-
       placeApple();
     }
 
@@ -210,10 +214,134 @@ document.addEventListener("DOMContentLoaded", () => {
         gameOver = true;
         cancelAnimationFrame(animationFrameId);
         animationFrameId = null;
-
         resetGame();
         return;
       }
+    }
+
+    handleGamepadInput();
+  }
+
+  window.addEventListener("gamepadconnected", (event) => {
+    console.log(
+      `Gamepad connected at index ${event.gamepad.index}: ${event.gamepad.id}`,
+    );
+    connectedGamepads[event.gamepad.index] = event.gamepad;
+
+    lastGamepadButtonState[event.gamepad.index] = event.gamepad.buttons.map(
+      (b) => b.pressed,
+    );
+  });
+
+  window.addEventListener("gamepaddisconnected", (event) => {
+    console.log(
+      `Gamepad disconnected from index ${event.gamepad.index}: ${event.gamepad.id}`,
+    );
+    delete connectedGamepads[event.gamepad.index];
+    delete lastGamepadButtonState[event.gamepad.index];
+  });
+
+  function handleGamepadInput() {
+    const gamepads = navigator.getGamepads();
+
+    for (const index in connectedGamepads) {
+      const gamepad = gamepads[index];
+      if (!gamepad || !gamepad.connected) {
+        continue;
+      }
+
+      const currentButtonState = gamepad.buttons.map((b) => b.pressed);
+
+      const pauseButtonIndex = 9;
+      const altPauseButtonIndex = 8;
+
+      if (
+        (currentButtonState[pauseButtonIndex] &&
+          !lastGamepadButtonState[index][pauseButtonIndex]) ||
+        (currentButtonState[altPauseButtonIndex] &&
+          !lastGamepadButtonState[index][altPauseButtonIndex])
+      ) {
+        if (gameOver && !isPaused) return;
+        isPaused = !isPaused;
+        if (isPaused) {
+          if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
+          }
+
+          context.fillStyle = currentTheme.canvasBg;
+          context.fillRect(0, 0, canvas.width, canvas.height);
+          drawApple();
+          drawSnake();
+        } else {
+          if (!animationFrameId && !gameOver) {
+            animationFrameId = requestAnimationFrame(gameLoop);
+          }
+        }
+      }
+
+      if (isPaused || gameOver) {
+        lastGamepadButtonState[index] = currentButtonState;
+        continue;
+      }
+
+      if (
+        gamepad.buttons[12] &&
+        gamepad.buttons[12].pressed &&
+        snake.dy === 0
+      ) {
+        snake.dy = -grid;
+        snake.dx = 0;
+      } else if (
+        gamepad.buttons[13] &&
+        gamepad.buttons[13].pressed &&
+        snake.dy === 0
+      ) {
+        snake.dy = grid;
+        snake.dx = 0;
+      } else if (
+        gamepad.buttons[14] &&
+        gamepad.buttons[14].pressed &&
+        snake.dx === 0
+      ) {
+        snake.dx = -grid;
+        snake.dy = 0;
+      } else if (
+        gamepad.buttons[15] &&
+        gamepad.buttons[15].pressed &&
+        snake.dx === 0
+      ) {
+        snake.dx = grid;
+        snake.dy = 0;
+      }
+
+      const leftStickX = gamepad.axes[0];
+      const leftStickY = gamepad.axes[1];
+
+      if (
+        Math.abs(leftStickX) > GAMEPAD_AXIS_THRESHOLD ||
+        Math.abs(leftStickY) > GAMEPAD_AXIS_THRESHOLD
+      ) {
+        if (Math.abs(leftStickX) > Math.abs(leftStickY)) {
+          if (leftStickX < -GAMEPAD_AXIS_THRESHOLD && snake.dx === 0) {
+            snake.dx = -grid;
+            snake.dy = 0;
+          } else if (leftStickX > GAMEPAD_AXIS_THRESHOLD && snake.dx === 0) {
+            snake.dx = grid;
+            snake.dy = 0;
+          }
+        } else {
+          if (leftStickY < -GAMEPAD_AXIS_THRESHOLD && snake.dy === 0) {
+            snake.dy = -grid;
+            snake.dx = 0;
+          } else if (leftStickY > GAMEPAD_AXIS_THRESHOLD && snake.dy === 0) {
+            snake.dy = grid;
+            snake.dx = 0;
+          }
+        }
+      }
+
+      lastGamepadButtonState[index] = currentButtonState;
     }
   }
 
@@ -221,7 +349,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.code === "Space") {
       e.preventDefault();
       if (gameOver && !isPaused) return;
-
       isPaused = !isPaused;
       if (isPaused) {
         if (animationFrameId) {
@@ -244,6 +371,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (isPaused || gameOver) return;
 
     const keyPressed = e.which;
+
     if (keyPressed === 37 && snake.dx === 0) {
       snake.dx = -grid;
       snake.dy = 0;
