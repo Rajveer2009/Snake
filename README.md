@@ -39,7 +39,7 @@ npm install
 npm run tauri dev
 
 # Build the Tauri app
-npm run tauri build -- --bundles app
+npm run tauri build
 ```
 
 ## 📁 Folder Structure
