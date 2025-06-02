@@ -29,8 +29,8 @@ The Snake Game is a classic arcade-style game where you control a snake to eat f
 
 ```bash
 # Clone this repository
-git clone https://github.com/your-username/snake-tauri-app.git
-cd snake-tauri-app
+git clone https://github.com/rajveer2009/Snake.git
+cd Snake
 
 # Install dependencies
 npm install
